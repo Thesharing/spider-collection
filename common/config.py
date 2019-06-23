@@ -1,7 +1,6 @@
 import os
 import json
 import logging
-from dateutil import parser
 from .util import encode_json
 
 
