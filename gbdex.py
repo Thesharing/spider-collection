@@ -1,13 +1,17 @@
-from gbdex.spider import crawl_api, crawl_data_file
-from common.persistence import MongoDB
 from time import sleep
 
+from common.persistence import MongoDB
+from gbdex.spider import GBDEXSpider
+
 if __name__ == '__main__':
-    mongo = MongoDB('gbdex')
-    for api in crawl_api():
+    spider = GBDEXSpider()
+
+    mongo = MongoDB('gbdex-api')
+    for api in spider.crawl_api():
         mongo.insert(api)
         sleep(2)
 
-    for item in crawl_data_file():
+    mongo = MongoDB('gbdex-data')
+    for item in spider.crawl_data_file():
         mongo.insert(item)
         sleep(2)

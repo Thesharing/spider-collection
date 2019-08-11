@@ -7,7 +7,7 @@ from . import config
 
 class Log:
     @staticmethod
-    def create_logger(name: str):
+    def create_logger(name: str, level: str = config.Config.log.level):
         logger = logging.getLogger(name)
         logger.propagate = False
         formatter = logging.Formatter(fmt='[%(levelname)s]\t%(asctime)s %(message)s',
@@ -20,5 +20,5 @@ class Log:
         stream_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
         logger.addHandler(stream_handler)
-        logger.setLevel(config.Config.log.level)
+        logger.setLevel(level)
         return logger
