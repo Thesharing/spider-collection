@@ -22,9 +22,13 @@ def extract_name(section, pattern):
         if text is not None:
             res = pattern.search(text)
             idx = res.start() if res is not None else len(text)
+            english_name = text[idx:].strip()
+            name = text[:idx].strip()
+            if name is None or len(name) == 0:
+                name = english_name
             name_list.append({
-                'name': text[:idx].strip(),
-                'english': text[idx:],
+                'name': name,
+                'english': english_name,
                 'idx': name_idx
             })
             name_idx += 1
@@ -66,6 +70,8 @@ class Extractor:
         movie_type = it.text[3:].split('/')
 
         it = it.find_next_sibling('p')
+        if '集数' in it.text:
+            return None
         res = self.pattern['number'].search(it.text)
         movie_length = int(res.group(0)) if res is not None else None
 

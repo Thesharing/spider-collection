@@ -1,15 +1,15 @@
-from cbooo.spider import Spider
+from spiderutil.connector import RedisSet, MongoDB
+
+from cbooo.spider import CboooSpider
 from cbooo.extractor import Extractor
-from common.persistence import RedisSet, MongoDB
 
 if __name__ == '__main__':
-    spider = Spider()
+    spider = CboooSpider()
     ext = Extractor()
     redis = RedisSet('cbooo')
-    mongo = MongoDB('cbooo-total')
+    redis.check_connection()
+    mongo = MongoDB('cbooo')
+    mongo.check_connection()
 
-    # from pprint import pprint
-    # pprint(spider._crawl('640367', ext))
-
+    spider.get_id(redis)
     spider.start_crawl(ext, redis, mongo)
-    # spider.get_id(redis)

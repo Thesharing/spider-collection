@@ -1,13 +1,13 @@
 import json
 import requests
 
-from common.log import Log
+from spiderutil.log import Log
 
 
 class AliyunSpider:
     def __init__(self):
         self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
-        self.log = Log.create_logger('aliyun', level='INFO')
+        self.log = Log.create_logger(name='aliyun', path='./log/aliyun.log', level='INFO')
 
     def crawl_list(self, page=1, url=None):
         headers = {
@@ -108,7 +108,7 @@ class AliyunSpider:
         total_records = query_rates['totalRecords'] if query_rates is not None else 0
         self.log.info('Total rating records: {}'.format(total_records))
         total_page = query_rates['totalPage'] if query_rates is not None else 0
-        comments = query_rates['commens'] if query_rates is not None else []
+        comments = query_rates['comments'] if query_rates is not None else []
         while page_index < total_page:
             page_index += 1
             r = requests.get(query_rates_url.format(page_index), headers=headers)
@@ -130,4 +130,3 @@ class AliyunSpider:
 
         api = list({**info, **doc} for info, doc in zip(api_info, api_doc))
         return price, api, comments
-t

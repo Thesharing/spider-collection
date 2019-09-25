@@ -1,36 +1,22 @@
 import json
 import re
-import requests
-import time
 
 from bs4 import BeautifulSoup as Soup
+
+from spiderutil.network import Session
 
 
 class JuheSpider:
 
     def __init__(self):
         self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
-
-    @staticmethod
-    def get(url):
-        retry_time = 10
-        while True:
-            try:
-                r = requests.get(url)
-                return r
-            except Exception as e:
-                print(e)
-                if retry_time > 0:
-                    retry_time -= 1
-                    time.sleep(5)
-                else:
-                    raise e
+        self.session = Session(retry=10, timeout=20)
 
     def crawl_api(self, total_page=6, start_from=None):
         url = 'https://www.juhe.cn/docs/index/page/{0}'
         start = start_from is None
         for page in range(total_page + 1):
-            r = self.get(url.format(page))
+            r = self.session.get(url.format(page))
             s = Soup(r.text, 'lxml')
             ul = s.find('ul', class_='api-list-ul')
             for li in ul.find_all('li', class_='api-list-li'):
@@ -52,7 +38,7 @@ class JuheSpider:
 
         url = 'https://www.juhe.cn{0}'.format(link)
         num = link.split('/')[-1]
-        r = self.get(url)
+        r = self.session.get(url)
         s = Soup(r.text, 'lxml')
         ul = s.find('ul', class_='api-pp')
         temp = []
@@ -90,7 +76,7 @@ class JuheSpider:
             api_url_list.append({'title': api_title, 'url': api_url + '/' + num})
 
         price_url = 'https://www.juhe.cn/docs/api/packages/{0}'.format(num)
-        r = self.get(price_url)
+        r = self.session.get(price_url)
         result = json.loads(r.text)
         html = result['result']['html']
         s = Soup(html, 'lxml')
@@ -110,7 +96,7 @@ class JuheSpider:
                 'title': api_url['title']
             }
             api_url = 'https://www.juhe.cn{0}'.format(api_url['url'])
-            r = self.get(api_url)
+            r = self.session.get(api_url)
             result = json.loads(r.text)['result']
             s = Soup(result['html'], 'lxml')
             div_list = s.find_all('div', class_='simpleline')
@@ -188,7 +174,7 @@ class JuheSpider:
         api_item['API'] = api_list
 
         error_code_url = 'https://www.juhe.cn/docs/api/errorCode/{}'.format(num)
-        r = self.get(error_code_url)
+        r = self.session.get(error_code_url)
         result = json.loads(r.text)
         api_item['错误码'] = result['result'] if 'result' in result else None
 
@@ -197,7 +183,7 @@ class JuheSpider:
     def crawl_data(self, start_from=None):
         url = 'https://www.juhe.cn/market'
         start = start_from is None
-        r = self.get(url)
+        r = self.session.get(url)
         s = Soup(r.text, 'lxml')
         ul = s.find('ul', class_='api-list-ul')
         for li in ul.find_all('li', class_='api-list-li'):
@@ -212,7 +198,7 @@ class JuheSpider:
             yield link, self._crawl_data_item(link)
 
     def _crawl_data_item(self, link):
-        r = self.get(link)
+        r = self.session.get(link)
         s = Soup(r.text, 'lxml')
         block_main_info = s.find('div', class_='block-main-info')
 

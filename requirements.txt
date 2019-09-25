@@ -4,3 +4,4 @@ requests
 pymongo
 redis
 tqdm
+spiderutil

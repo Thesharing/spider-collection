@@ -1,11 +1,14 @@
-from common.session import Session
-from common import config
-from common.log import Log
-from common.persistence import RedisSet, MongoDB
-from common.error import NetworkException
-from .extractor import Extractor
 import json
 import time
+
+from common import config
+
+from spiderutil.network import Session
+from spiderutil.log import Log
+from spiderutil.connector import RedisSet, MongoDB
+from spiderutil.exceptions import NetworkException, RetryLimitExceededException
+
+from .extractor import Extractor
 
 BASE_URL = 'http://www.cbooo.cn/'
 INTERVAL = config.Config.spider.interval
@@ -16,7 +19,7 @@ def url(path):
     return BASE_URL + path
 
 
-class Spider:
+class CboooSpider:
     def __init__(self):
         self.session = Session()
         self.logger = Log.create_logger('spider')
@@ -52,14 +55,17 @@ class Spider:
         while not redis.empty():
             movie_id = redis.pop()
             self.logger.info('Movie ID: {}'.format(movie_id))
-            info = self._crawl(movie_id, extractor)
-            if info is not None:
-                if mongo.count({'id': movie_id}) <= 0:
-                    mongo.insert(info)
+            try:
+                info = self._crawl(movie_id, extractor)
+                if info is not None:
+                    if mongo.count({'id': movie_id}) <= 0:
+                        mongo.insert(info)
+                    else:
+                        self.logger.info('Duplicate record {}'.format(movie_id))
                 else:
-                    self.logger.info('Duplicate record')
-            else:
-                self.logger.info('Failed to download')
+                    self.logger.warning('Useless record {}'.format(movie_id))
+            except NetworkException as e:
+                self.logger.error(e)
                 redis.add(movie_id)
             time.sleep(10)
 
@@ -69,6 +75,8 @@ class Spider:
             try:
                 res = self.session.get(url=url('/m/{}'.format(movie_id)))
                 info = extractor.extract_info(res.text)
+                if info is None:
+                    return None
                 res = self.session.get(url=url('/Mdata/getMovieEventAll?movieid={}'.format(movie_id)))
                 info['event'] = extractor.extract_events(res.text)
                 info['id'] = movie_id
@@ -76,4 +84,5 @@ class Spider:
             except (NetworkException, AttributeError) as e:
                 self.logger.error(str(e))
                 retry -= 1
-        return None
+                if retry <= 0:
+                    raise RetryLimitExceededException(movie_id) from e

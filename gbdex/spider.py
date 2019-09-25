@@ -6,8 +6,13 @@ from bs4 import BeautifulSoup as Soup
 from requests.exceptions import Timeout
 from tqdm import tqdm
 
+from spiderutil.network import Session
+
 
 class GBDEXSpider:
+
+    def __init__(self):
+        self.session = Session(timeout=10)
 
     def crawl_api(self):
         param = {
@@ -23,7 +28,7 @@ class GBDEXSpider:
             'limit': 1000
         }
         url = 'http://trade.gbdex.com/trade.web/accurateData/filterDataByAjax'
-        r = requests.post(url, params=param, timeout=10)
+        r = self.session.post(url, params=param)
         json_data = json.loads(r.text)
         link_list = json_data['rows'] if 'rows' in json_data else list()
         print('GDBEX - API: {0} items total in list'.format(len(link_list)))
@@ -38,7 +43,7 @@ class GBDEXSpider:
     def _crawl_api_item(self, product_id):
         url = 'http://trade.gbdex.com/trade.web/api/apishow'
         param = {'productID': product_id}
-        r = requests.get(url, params=param, timeout=10)
+        r = self.session.get(url, params=param)
         s = Soup(r.text, 'lxml')
         api = dict()
         api['标题'], api['简介'], api['价格'], api['数据类型'], api['覆盖区域'], api['点击量'], api[

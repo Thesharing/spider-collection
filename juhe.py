@@ -1,7 +1,8 @@
 from time import sleep
 
-from common.persistence import MongoDB
 from juhe.spider import JuheSpider
+from spiderutil.connector import MongoDB
+
 
 if __name__ == '__main__':
     spider = JuheSpider()

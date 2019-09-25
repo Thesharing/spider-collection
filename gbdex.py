@@ -1,7 +1,8 @@
 from time import sleep
 
-from common.persistence import MongoDB
 from gbdex.spider import GBDEXSpider
+
+from spiderutil.connector import MongoDB
 
 if __name__ == '__main__':
     spider = GBDEXSpider()
